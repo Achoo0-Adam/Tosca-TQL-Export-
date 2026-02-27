@@ -4,7 +4,7 @@ Connects to a Tosca workspace via the TCAPI (Tosca Commander API) and runs a TQL
 
 ## What this does
 
-`Run-ToscaTQL.ps1` connects to a Tosca workspace via the **TCAPI** (Tosca Commander API) and runs a TQL query to export data to XML — with no UI required. It is designed for bulk export of historical test execution data but can query any Tosca object type.
+`Run-ToscaTQLExport.ps1` connects to a Tosca workspace via the **TCAPI** (Tosca Commander API) and runs a TQL query to export data to XML — with no UI required. It is designed for bulk export of historical test execution data but can query any Tosca object type.
 
 ---
 
@@ -18,7 +18,7 @@ Connects to a Tosca workspace via the TCAPI (Tosca Commander API) and runs a TQL
 
 ## ⚙️ What you need to change before running
 
-Open `Run-ToscaTQL.ps1`. The CONFIG section is at the top of the file (lines 6–28). You **must** update the following values before the script will work:
+Open `Run-ToscaTQLExport.ps1`. The CONFIG section is at the top of the file (lines 6–28). You **must** update the following values before the script will work:
 
 ---
 
@@ -139,6 +139,9 @@ Several queries are pre-written in the script (commented out). To use one, delet
 TQL syntax reference: [Tricentis documentation](https://documentation.tricentis.com)
 
 ---
+
+<img width="1901" height="1200" alt="image" src="https://github.com/user-attachments/assets/54392a72-4049-42a8-92b2-c02eb99301fc" />
+
 
 ## Output format
 
