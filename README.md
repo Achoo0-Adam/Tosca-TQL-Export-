@@ -16,57 +16,122 @@ Connects to a Tosca workspace via the TCAPI (Tosca Commander API) and runs a TQL
 
 ---
 
-## Setup
+## ⚙️ What you need to change before running
 
-Open `Run-ToscaTQL.ps1` and fill in the CONFIG section at the top:
+Open `Run-ToscaTQL.ps1`. The CONFIG section is at the top of the file (lines 6–28). You **must** update the following values before the script will work:
 
-| Variable | Description |
-|---|---|
-| `$toscaCommanderPath` | Path to your Tosca Commander install folder |
-| `$toscaServerUrl` | URL of your Tosca Server (e.g. `http://localhost/`) |
-| `$workspacePath` | Full path to your `.tws` workspace file |
-| `$outputFile` | Where to write the XML output |
-| `$personalAccessToken` | PAT from Tosca Server > Profile > Personal Access Tokens |
-| `$clientId` / `$clientSecret` | Alternative OAuth credentials from Tosca Server > Administration > OAuth Clients |
-| `$workspaceUser` / `$workspacePassword` | Your Tosca Commander workspace login |
-| `$tql` | The TQL query to run (see below) |
+---
+
+### 1. Tosca Commander install path
+```powershell
+$toscaCommanderPath = "C:\Program Files (x86)\TRICENTIS\Tosca Testsuite\ToscaCommander"
+```
+**Change this if** Tosca Commander is installed in a different location on your machine.
+To find the correct path, right-click the Tosca Commander shortcut > Properties > look at the "Start in" or "Target" field.
+
+---
+
+### 2. Tosca Server URL
+```powershell
+$toscaServerUrl = "http://localhost/"
+```
+**Change this to** your Tosca Server address. If Tosca Server is on a different machine, it will be something like `http://tosca-server.yourcompany.com/`.
+Leave as `http://localhost/` if Tosca Server is running on the same machine.
+
+---
+
+### 3. Workspace file path
+```powershell
+$workspacePath = "C:\Tosca_Projects\Tosca_Workspaces\ToscaCork\ToscaCork.tws"
+```
+**Change this to** the full path of your `.tws` workspace file.
+You can find this by opening Tosca Commander and checking the workspace path in the title bar or File > Recent Workspaces.
+
+---
+
+### 4. Output file location
+```powershell
+$outputFile = "C:\Temp\TQL_ExecutionResults.xml"
+```
+**Change this to** wherever you want the XML file saved. The folder will be created automatically if it doesn't exist.
+
+---
+
+### 5. Authentication — choose ONE method
+
+**Option A: Personal Access Token (recommended)**
+```powershell
+$personalAccessToken = ""   # <-- paste your token here
+```
+To get a PAT: log in to Tosca Server in your browser > click your profile/avatar > **Personal Access Tokens** > generate a new token > paste the token string here.
+
+**Option B: OAuth Client ID + Secret**
+```powershell
+$clientId     = ""   # <-- paste your Client ID here
+$clientSecret = ""   # <-- paste your Client Secret here
+```
+To get these: Tosca Server > **Administration** > **OAuth Clients** > create a new client.
+
+> Leave the unused option blank. If `$personalAccessToken` is filled in, it takes priority.
+
+---
+
+### 6. Workspace login credentials
+```powershell
+$workspaceUser     = "Admin"
+$workspacePassword = "1234567890-="
+```
+**Change these to** the username and password you normally use when opening this workspace in Tosca Commander.
+If your workspace has no password set, leave `$workspacePassword` as `""`.
+
+---
+
+### 7. TQL query (optional — default works out of the box)
+```powershell
+$tql = "=>SUBPARTS:ExecutionLogEntry"
+```
+The default query retrieves **all execution history**. You can leave this as-is or customise it. See the **TQL queries** section below for examples.
 
 ---
 
 ## Running the script
 
-Open a fresh PowerShell 7 window and run:
+Open a **fresh PowerShell 7** window (search "PowerShell 7" in Start menu — not "Windows PowerShell") and run:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
+cd "C:\Path\To\Script\Folder"
 .\Run-ToscaTQL.ps1
 ```
 
-Or to run silently and redirect output to a log file:
+To run silently and save output to a log file:
 
 ```powershell
 .\Run-ToscaTQL.ps1 > C:\Temp\export_log.txt 2>&1
 ```
 
-To schedule it (e.g. nightly via Task Scheduler), use:
+To schedule it (e.g. nightly via Task Scheduler):
 
 ```
-Program:  pwsh.exe
+Program:   pwsh.exe
 Arguments: -ExecutionPolicy Bypass -File "C:\Path\To\Run-ToscaTQL.ps1"
 ```
+
+> **Important:** Always use a fresh PowerShell 7 window. If you run the script twice in the same window without it closing cleanly, you may get an "Api already initialized" error.
 
 ---
 
 ## TQL queries for execution history
 
-The script ships with `=>SUBPARTS:ExecutionLogEntry` as the default query. This retrieves all execution log entries (the historical record of every test run). Several other useful queries are pre-written in the CONFIG section — just uncomment the one you need:
+Several queries are pre-written in the script (commented out). To use one, delete the `#` at the start of that line and add `#` to the current active `$tql` line.
 
 | Query | Description |
 |---|---|
-| `=>SUBPARTS:ExecutionLogEntry` | All execution history |
+| `=>SUBPARTS:ExecutionLogEntry` | **All execution history** (default) |
 | `=>SUBPARTS:ExecutionLogEntry[ExecutionStatus=Failed]` | Failed runs only |
 | `=>SUBPARTS:ExecutionLogEntry[ExecutionStatus=Passed]` | Passed runs only |
-| `=>SUBPARTS:ExecutionLogEntry[StartedAt>='2025-01-01']` | Results after a date |
+| `=>SUBPARTS:ExecutionLogEntry[StartedAt>='2025-01-01']` | Results after a specific date |
+| `=>SUBPARTS:ExecutionLogEntry[StartedAt>='2025-01-01' AND StartedAt<='2025-12-31']` | Results within a date range |
 | `=>SUBPARTS:ExecutionLogEntry[TestCaseName='My Test']` | Results for a specific test case |
 | `=>SUBPARTS:ExecutionList` | Top-level execution list containers |
 | `=>SUBPARTS:TestCase` | All test cases (not execution results) |
@@ -77,7 +142,7 @@ TQL syntax reference: [Tricentis documentation](https://documentation.tricentis.
 
 ## Output format
 
-The script writes an XML file at `$outputFile`. Each result is a child element of `<Results>`. For execution log entries it looks like:
+The script writes an XML file at `$outputFile`. Each result is a child element of `<Results>`:
 
 ```xml
 <Results>
@@ -102,9 +167,9 @@ The script writes an XML file at `$outputFile`. Each result is a child element o
 
 For very large exports (tens of thousands of records), consider:
 
-- **Filtering by date range** in the TQL query to break the export into smaller chunks
-- Running the script on the Tosca Server machine itself to avoid network overhead
-- Increasing PowerShell memory if you hit out-of-memory errors: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\Run-ToscaTQL.ps1`
+- **Filtering by date range** in the TQL query to break the export into smaller batches
+- Running the script **on the Tosca Server machine itself** to avoid network overhead
+- Running with: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\Run-ToscaTQL.ps1`
 
 ---
 
@@ -112,8 +177,9 @@ For very large exports (tens of thousands of records), consider:
 
 | Error | Fix |
 |---|---|
-| `Api already initialized` | Open a fresh PS7 window before running |
-| `Login Failed` | Check workspace username/password |
-| `Failed to authenticate User` | Check PAT or Client ID/Secret |
-| `Assembly not found` | Verify `$toscaCommanderPath` points to your Tosca install |
-| `Could not load System.Runtime Version=8.0.0.0` | You are running PS5 — switch to PS7 |
+| `Api already initialized` | Open a **fresh PS7 window** before running |
+| `Login Failed` | Check `$workspaceUser` and `$workspacePassword` |
+| `Failed to authenticate User` | Check your PAT or Client ID/Secret |
+| `Assembly not found` | Verify `$toscaCommanderPath` points to your actual Tosca install |
+| `Could not load System.Runtime Version=8.0.0.0` | You are running PS5 — must use **PowerShell 7** |
+| `No results found` | Check that your TQL query is correct and the workspace contains matching objects |
